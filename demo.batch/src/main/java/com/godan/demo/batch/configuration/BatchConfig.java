@@ -1,10 +1,12 @@
 package com.godan.demo.batch.configuration;
 
+import com.godan.demo.batch.decider.MyJobExecutionDecider;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -31,6 +33,9 @@ public class BatchConfig {
         return new MyStepExecutionListener();
     }
 
+    @Bean
+    public JobExecutionDecider myJobExecutionDecider(){ return new MyJobExecutionDecider(); }
+
 
     @Bean
     public Step step1(){
@@ -46,7 +51,7 @@ public class BatchConfig {
     @Bean
     public Step step2(){
 
-        boolean isTrue = true;
+        boolean isTrue = false;
         return new StepBuilder("step-2",jobRepository).tasklet(new Tasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
@@ -56,7 +61,7 @@ public class BatchConfig {
                 System.out.println("Step-2 Completed");
                 return RepeatStatus.FINISHED;
             }
-        }, platformTransactionManager).listener(myStepExecutionListener()).build();
+        }, platformTransactionManager).build();
     }
 
     @Bean
@@ -89,10 +94,9 @@ public class BatchConfig {
     public Job job(){
         return  new JobBuilder("job-1", jobRepository)
                 .start(step1())
-                    .on("COMPLETED").to(step2())
-                .from(step2())
-                    .on("TEST_STATUS").to(step4())
-                .from(step2())
+                    .on("COMPLETED").to(myJobExecutionDecider())
+                        .on("TEST_STATUS").to(step2())
+                .from(myJobExecutionDecider())
                     .on("*").to(step3())
                 .end()
                 .build();
