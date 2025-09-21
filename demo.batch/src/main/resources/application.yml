@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: demo.batch
+  datasource:
+    url: jdbc:postgresql://localhost:5432/godanBatch?currentSchema=batchprocess
+    username: postgres
+    password: password
+#JDBC driver
+    driver-class-name: org.postgresql.Driver
+
+  batch:
+    jdbc:
+      initialize-schema: always
+
+    job:
+      enabled: false
+
+
+
+
